@@ -1,18 +1,22 @@
+extern crate dotenv;
 extern crate env_logger;
 extern crate rustc_serialize;
 extern crate tungstenite;
 extern crate url;
-extern crate dotenv;
 
-use rustc_serialize::json;
-use tungstenite::{connect, Message};
-use url::Url;
 use dotenv::dotenv;
+// use protocol::WebSocket;
+use rustc_serialize::json;
 use std::env;
 use std::process;
+// use tungstenite::client;
+use tungstenite::protocol::WebSocket;
+// use tungstenite::AutoStream;
+use tungstenite::{connect, Message};
+use url::Url;
 
 fn main() {
-  env_logger::init();  
+  env_logger::init();
   dotenv().ok();
 
   let relay_key = &env::var("RELAY_KEY").unwrap();
@@ -24,7 +28,8 @@ fn main() {
     process::exit(1);
   }
 
-  let (mut socket, response) = connect(Url::parse("wss://my.webhookrelay.com:443/v1/socket").unwrap()).expect("Can't connect");
+  let (mut socket, response) =
+    connect(Url::parse("wss://my.webhookrelay.com:443/v1/socket").unwrap()).expect("Can't connect");
 
   println!("Connected to the server");
   println!("Response HTTP code: {}", response.code);
@@ -35,7 +40,7 @@ fn main() {
 
   let auth_action = AuthStruct {
     action: "auth".to_string(),
-    key: relay_key.to_string(),   
+    key: relay_key.to_string(),
     secret: relay_secret.to_string(),
   };
 
@@ -48,35 +53,61 @@ fn main() {
   loop {
     let msg = socket.read_message().expect("Error reading message");
 
-    let event: StatusStruct = json::decode(&msg.to_text().unwrap()).unwrap();    
-    if event.r#type == "status" {
-      println!("Received status message");
+    // let event: StatusStruct = json::decode(&msg.to_text().unwrap()).unwrap();
+    // if event.r#type == "status" {
+    //   println!("Received status message");
 
-      if event.status == "authenticated" {
-        let subscribe_action = SubscribeStruct {
-          action: "subscribe".to_string(),
-          buckets: [relay_bucket.to_string()],
-        };
+    //   if event.status == "authenticated" {
+    //     let subscribe_action = SubscribeStruct {
+    //       action: "subscribe".to_string(),
+    //       buckets: [relay_bucket.to_string()],
+    //     };
 
-         // subscribing to buckets
-        let encoded = json::encode(&subscribe_action).unwrap();
-        socket.write_message(Message::Text(encoded.into())).unwrap();
-      }
+    //      // subscribing to buckets
+    //     let encoded = json::encode(&subscribe_action).unwrap();
+    //     socket.write_message(Message::Text(encoded.into())).unwrap();
+    //   }
 
-      // TODO: answer to pings with pongs
+    //   // TODO: answer to pings with pongs
 
-      // TODO: if unauthorized - close socket and exit
-     
-      
-    } else if event.r#type == "webhook" {
-      // deserialize into a webhook msg
-      println!("Received webhook message");
+    //   // TODO: if unauthorized - close socket and exit
 
-      // TODO: deserialize
-    }
+    // } else if event.r#type == "webhook" {
+    //   // deserialize into a webhook msg
+    //   println!("Received webhook message");
+
+    //   // TODO: deserialize
+    // }
     println!("Received: {}", msg);
   }
-    // socket.close(None);
+  // socket.close(None);
+}
+
+fn handleMessage(socket: WebSocket, relay_bucket: String, msg: Message) -> () {
+  let event: StatusStruct = json::decode(&msg.to_text().unwrap()).unwrap();
+  if event.r#type == "status" {
+    println!("Received status message");
+
+    if event.status == "authenticated" {
+      let subscribe_action = SubscribeStruct {
+        action: "subscribe".to_string(),
+        buckets: [relay_bucket.to_string()],
+      };
+
+      // subscribing to buckets
+      let encoded = json::encode(&subscribe_action).unwrap();
+      socket.write_message(Message::Text(encoded.into())).unwrap();
+    }
+
+  // TODO: answer to pings with pongs
+
+  // TODO: if unauthorized - close socket and exit
+  } else if event.r#type == "webhook" {
+    // deserialize into a webhook msg
+    println!("Received webhook message");
+
+    // TODO: deserialize
+  }
 }
 
 // Automatically generate `RustcDecodable` and `RustcEncodable` trait
