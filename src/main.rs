@@ -71,6 +71,8 @@ fn main() {
     } else if event.r#type == "webhook" {
       // deserialize into a webhook msg
       println!("Received webhook message");
+
+      // TODO: deserialize
     }
     println!("Received: {}", msg);
   }
