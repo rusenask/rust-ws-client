@@ -1,0 +1,13 @@
+[package]
+name = "webhookrelay-ws-client"
+version = "0.1.0"
+authors = ["Karolis Rusenas <karolis.rusenas@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+dotenv = "0.13.0"
+log = "0.4.6"
+env_logger = "0.6.1"
+tungstenite="0.6.1"
+url = "1.7.2"
+rustc-serialize = "0.3"
