@@ -75,6 +75,10 @@ fn main() {
         let encoded = json::encode(&pong_action).unwrap();
         socket.write_message(Message::Text(encoded.into())).unwrap();
         println!("Ping -> Pong");
+      } else if event.status == "unauthorized" {
+        socket.close(None);
+        println!("unauthorized!");
+        process::exit(1);
       }
 
     // TODO: if unauthorized - close socket and exit
