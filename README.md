@@ -3,8 +3,11 @@
 
 Implements https://webhookrelay.com/v1/guide/socket-server protocol.
 
-To do:
+Goals:
 
+- [x] authenticate
+- [x] subscribe to webhooks
+- [x] webhook forwarding 
 - [ ] concurrent webhook forwarding
-- [ ] answer to pings
+- [x] answer to pings
 - [ ] reconnect on missing server pings
