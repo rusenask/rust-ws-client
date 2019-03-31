@@ -5,13 +5,9 @@ extern crate tungstenite;
 extern crate url;
 
 use dotenv::dotenv;
-// use protocol::WebSocket;
 use rustc_serialize::json;
 use std::env;
 use std::process;
-// use tungstenite::client;
-use tungstenite::protocol::WebSocket;
-// use tungstenite::AutoStream;
 use tungstenite::{connect, Message};
 use url::Url;
 
@@ -53,61 +49,36 @@ fn main() {
   loop {
     let msg = socket.read_message().expect("Error reading message");
 
-    // let event: StatusStruct = json::decode(&msg.to_text().unwrap()).unwrap();
-    // if event.r#type == "status" {
-    //   println!("Received status message");
+    let event: StatusStruct = json::decode(&msg.to_text().unwrap()).unwrap();
+    if event.r#type == "status" {
+      println!("Received status message");
 
-    //   if event.status == "authenticated" {
-    //     let subscribe_action = SubscribeStruct {
-    //       action: "subscribe".to_string(),
-    //       buckets: [relay_bucket.to_string()],
-    //     };
+      if event.status == "authenticated" {
+        let subscribe_action = SubscribeStruct {
+          action: "subscribe".to_string(),
+          buckets: [relay_bucket.to_string()],
+        };
 
-    //      // subscribing to buckets
-    //     let encoded = json::encode(&subscribe_action).unwrap();
-    //     socket.write_message(Message::Text(encoded.into())).unwrap();
-    //   }
+        // subscribing to buckets
+        let encoded = json::encode(&subscribe_action).unwrap();
+        socket.write_message(Message::Text(encoded.into())).unwrap();
+      }
 
-    //   // TODO: answer to pings with pongs
+    // TODO: answer to pings with pongs
 
-    //   // TODO: if unauthorized - close socket and exit
+    // TODO: if unauthorized - close socket and exit
+    } else if event.r#type == "webhook" {
+      // deserialize into a webhook msg
+      println!("Received webhook message");
 
-    // } else if event.r#type == "webhook" {
-    //   // deserialize into a webhook msg
-    //   println!("Received webhook message");
-
-    //   // TODO: deserialize
-    // }
-    println!("Received: {}", msg);
-  }
-  // socket.close(None);
-}
-
-fn handleMessage(socket: WebSocket, relay_bucket: String, msg: Message) -> () {
-  let event: StatusStruct = json::decode(&msg.to_text().unwrap()).unwrap();
-  if event.r#type == "status" {
-    println!("Received status message");
-
-    if event.status == "authenticated" {
-      let subscribe_action = SubscribeStruct {
-        action: "subscribe".to_string(),
-        buckets: [relay_bucket.to_string()],
-      };
-
-      // subscribing to buckets
-      let encoded = json::encode(&subscribe_action).unwrap();
-      socket.write_message(Message::Text(encoded.into())).unwrap();
+      // TODO: deserialize
+      let webhook: WebhookStruct = json::decode(&msg.to_text().unwrap()).unwrap();
     }
 
-  // TODO: answer to pings with pongs
-
-  // TODO: if unauthorized - close socket and exit
-  } else if event.r#type == "webhook" {
-    // deserialize into a webhook msg
-    println!("Received webhook message");
-
-    // TODO: deserialize
+    println!("Received: {}", msg);
+    // handleMessage(socket, relay_bucket.to_string(), msg);
   }
+  // socket.close(None);
 }
 
 // Automatically generate `RustcDecodable` and `RustcEncodable` trait
@@ -137,7 +108,20 @@ pub struct StatusStruct {
 
 #[derive(RustcDecodable, RustcEncodable)]
 pub struct WebhookStruct {
+  meta: WebhookMetadata,
   r#type: String,
   body: String,
   method: String,
+}
+
+#[derive(RustcDecodable, RustcEncodable)]
+pub struct WebhookMetadata {
+  output_name: String,
+  output_destination: String,
+}
+
+#[derive(RustcDecodable, RustcEncodable)]
+pub struct WebhookHeaders {
+  output_name: String,
+  output_destination: String,
 }
