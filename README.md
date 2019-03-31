@@ -8,6 +8,6 @@ Goals:
 - [x] authenticate
 - [x] subscribe to webhooks
 - [x] webhook forwarding 
-- [ ] concurrent webhook forwarding
+- [x] concurrent webhook forwarding
 - [x] answer to pings
 - [ ] reconnect on missing server pings
